@@ -20,30 +20,33 @@ to setup
     ]
   ]
 
-  crt 5
+  crt
   [
     set size 2
     set color yellow
-    set time-sinece-last-found -99
+    set time-sinece-last-found 999
+    pen-down
   ]
 
+  reset-ticks
 end
 
 to go
+  tick
   ask turtles [search]
 end
 
 to search
   ifelse time-sinece-last-found <= 20
-  [right (random 181) - 90]
-  [right (random 21) - 10]
+    [right (random 181) - 90]
+    [right (random 21) - 10]
 
   forward 1
 
   ifelse pcolor = red
   [
       set time-sinece-last-found 0
-      set pcolor yellow
+      set pcolor black
   ]
   [
     set time-sinece-last-found time-sinece-last-found + 1
@@ -52,13 +55,13 @@ end
 
 @#$#@#$#@
 GRAPHICS-WINDOW
-210
-10
-647
-448
+476
+16
+931
+472
 -1
 -1
-13.0
+13.55
 1
 10
 1

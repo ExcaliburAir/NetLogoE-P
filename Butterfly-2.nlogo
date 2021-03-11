@@ -1,75 +1,60 @@
-globals
-[
-  num-clusters
-]
-
-turtles-own
-[
-  time-sinece-last-found
-]
+globals [ q ]
+patches-own [ elevation used? ]
+turtles-own [ start-patch ]
 
 to setup
   ca
-  set num-clusters 4
-
-  ask n-of num-clusters patches
+  ask patches
   [
-    ask n-of 20 patches in-radius 5
-    [
-      set pcolor red
-    ]
+    set elevation 200 + (100 * (sin (pxcor * 3.8) + sin (pycor * 3.8)))
+    set pcolor scale-color green elevation 0 400
+    set used? false
   ]
-
-  crt 1
+  crt 500
   [
     set size 2
-    set color yellow
-    set time-sinece-last-found 999
+    setxy random-pxcor random-pycor
+    show (word pxcor "" pycor " " elevation)
     pen-down
+    set start-patch patch-here
   ]
-
-  crt 1
-  [
-    set size 2
-    set color green
-    set time-sinece-last-found 999
-    pen-down
-  ]
-
   reset-ticks
+  set q The-Q
+
 end
 
 to go
+  ask turtles [move]
+  plot corridor-width
   tick
-  ask turtles [search]
+  if ticks >= 1000 [stop]
 end
 
-to search
-  ifelse time-sinece-last-found <= 20
-    [right (random 181) - 90]
-    [right (random 21) - 10]
+to move ; A turtle procedure
+  ifelse random-float 1.0 < q
+  [ uphill elevation ]
+  [ move-to one-of neighbors ]
 
-  forward 1
-
-  ifelse pcolor = red
-  [
-      set time-sinece-last-found 0
-      set pcolor black
-  ]
-  [
-    set time-sinece-last-found time-sinece-last-found + 1
-  ]
+  set used? true
 end
 
+to corridor-width
+  let num-patches-used with patches
+
+end
+
+to-report corridor-width
+  let num-patches-used with patches
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
-476
-16
-931
-472
+210
+10
+818
+619
 -1
 -1
-13.55
+4.0
 1
 10
 1
@@ -79,10 +64,10 @@ GRAPHICS-WINDOW
 1
 1
 1
--16
-16
--16
-16
+0
+149
+0
+149
 0
 0
 1
@@ -90,10 +75,10 @@ ticks
 30.0
 
 BUTTON
-59
-58
-125
-91
+32
+52
+98
+85
 setup
 setup
 NIL
@@ -107,9 +92,9 @@ NIL
 1
 
 BUTTON
-60
+56
 114
-123
+119
 147
 go
 go
@@ -123,7 +108,24 @@ NIL
 NIL
 1
 
+SLIDER
+20
+194
+192
+227
+The-Q
+The-Q
+0
+1
+0.85
+0.01
+1
+NIL
+HORIZONTAL
+
 @#$#@#$#@
+## I dont know how to handle this
+
 ## WHAT IS IT?
 
 (a general understanding of what the model is trying to show or explain)
