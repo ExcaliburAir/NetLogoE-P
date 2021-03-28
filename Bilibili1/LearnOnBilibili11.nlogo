@@ -1,67 +1,78 @@
-globals
-[
-  num-clusters
-]
+;; Spatial Prisoner's Dilemma
 
-turtles-own
-[
-  time-sinece-last-found
-]
+globals [payoffs]
+
+patches-own [payments]
+
 
 to setup
   ca
-  set num-clusters 4
-
-  ask n-of num-clusters patches
-  [
-    ask n-of 20 patches in-radius 5
-    [
-      set pcolor red
-    ]
-  ]
-
-  crt
-  [
-    set size 2
-    set color yellow
-    set time-sinece-last-found 999
-    pen-down
-  ]
-
   reset-ticks
+  ask patches [
+    set pcolor green
+    set payments []
+  ]
+  ask one-of patches [
+    set pcolor red
+  ]
+  set payoffs [[3 0][4 1]]
+
+end
+
+to-report get-payment [my-color his-color]
+  let my-action ifelse-value (my-color = green) [0][1]
+  let his-action ifelse-value (his-color = green) [0][1]
+  report item his-action (item my-action payoffs)
 end
 
 to go
   tick
-  ask turtles [search]
-end
-
-to search
-  ifelse time-sinece-last-found <= 20
-    [right (random 181) - 90]
-    [right (random 21) - 10]
-
-  forward 1
-
-  ifelse pcolor = red
-  [
-      set time-sinece-last-found 0
-      set pcolor black
+  ask patches [
+    play
   ]
-  [
-    set time-sinece-last-found time-sinece-last-found + 1
+  ask patches [
+    update
   ]
 end
 
+to-report first-x [x l]
+  let result []
+  if (length l = 0) [report []]
+  repeat x [
+    set result fput (first l) result
+    set l butfirst l
+    if ( length l = 0) [
+     report result
+    ]
+  ]
+  report result
+end
+
+
+to play
+  let chosen-one one-of neighbors4
+  set payments fput (get-payment pcolor [pcolor] of chosen-one) payments
+end
+
+to-report gain
+  report sum first-x history-length payments
+end
+
+to update
+  let chosen-one one-of neighbors
+  if ([gain] of chosen-one > gain)[
+    set pcolor [pcolor] of chosen-one
+  ]
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
-476
-16
-931
-472
+210
+10
+647
+448
 -1
 -1
-13.55
+13.0
 1
 10
 1
@@ -82,11 +93,11 @@ ticks
 30.0
 
 BUTTON
-59
-58
-125
-91
-setup
+77
+32
+143
+65
+NIL
 setup
 NIL
 1
@@ -99,11 +110,43 @@ NIL
 1
 
 BUTTON
-60
-114
-123
-147
+80
+79
+143
+112
+NIL
 go
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+SLIDER
+19
+125
+191
+158
+history-length
+history-length
+1
+50
+16.0
+1
+1
+NIL
+HORIZONTAL
+
+BUTTON
+159
+88
+222
+121
+NIL
 go
 T
 1
@@ -114,6 +157,24 @@ NIL
 NIL
 NIL
 1
+
+PLOT
+27
+186
+227
+336
+Total payments
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot [first payments] of patches\nplot sum [ifelse-value (length payments = 0) [0][first payment]] of patches"
 
 @#$#@#$#@
 ## WHAT IS IT?

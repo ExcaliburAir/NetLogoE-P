@@ -1,67 +1,74 @@
-globals
-[
-  num-clusters
+globals [
+  colors
+  payments
+  old-red-count
+  old-green-count
+  old-blue-count
 ]
 
-turtles-own
-[
-  time-sinece-last-found
-]
 
 to setup
   ca
-  set num-clusters 4
-
-  ask n-of num-clusters patches
-  [
-    ask n-of 20 patches in-radius 5
-    [
-      set pcolor red
-    ]
-  ]
-
-  crt
-  [
-    set size 2
-    set color yellow
-    set time-sinece-last-found 999
-    pen-down
-  ]
-
   reset-ticks
+
+  set colors [red green blue]
+  set payments [
+    [1 3 0]
+    [0 1 3]
+    [3 0 1]
+  ]
+
+  ask patches [set pcolor white]
+  create-turtles num-turtles [
+    set color one-of colors
+    setxy random-pxcor random-pycor
+  ]
+
 end
+
+; where a and b are colors
+to-report payoff [a b]
+  set a position a colors
+  set b position b colors
+  report item b (item a payments)
+end
+
+;reports the expected utility of an agent playing 'action' in the current population
+to-report u [action]
+  let result 0
+  foreach colors [ x ->
+    let theta count turtles with [color = x] / count turtles
+    set result result + (theta * payoff action x)
+  ]
+  report result
+end
+
 
 to go
   tick
-  ask turtles [search]
-end
+  let current-population-count map [ x -> count turtles with [color = x]] colors ;[num-red ]
+  let new-population-count (map [[x1 x2] -> x1 * (1 + u x2)] current-population-count colors)
 
-to search
-  ifelse time-sinece-last-found <= 20
-    [right (random 181) - 90]
-    [right (random 21) - 10]
+  set new-population-count map [x -> num-turtles * x / sum new-population-count] new-population-count
 
-  forward 1
-
-  ifelse pcolor = red
-  [
-      set time-sinece-last-found 0
-      set pcolor black
-  ]
-  [
-    set time-sinece-last-found time-sinece-last-found + 1
-  ]
+  ask turtles [die]
+  (foreach new-population-count colors [ [x1 x2] ->
+    create-turtles x1 [
+      set color x2
+      setxy random-pxcor random-pycor
+    ]
+  ])
 end
 
 @#$#@#$#@
 GRAPHICS-WINDOW
-476
-16
-931
-472
+210
+10
+647
+448
 -1
 -1
-13.55
+13.0
 1
 10
 1
@@ -82,12 +89,12 @@ ticks
 30.0
 
 BUTTON
-59
-58
-125
-91
-setup
-setup
+10
+20
+76
+53
+NIL
+setup\n
 NIL
 1
 T
@@ -99,11 +106,11 @@ NIL
 1
 
 BUTTON
-60
-114
-123
-147
-go
+15
+108
+78
+141
+NIL
 go
 T
 1
@@ -114,6 +121,78 @@ NIL
 NIL
 NIL
 1
+
+SLIDER
+14
+153
+186
+186
+num-turtles
+num-turtles
+0
+100
+46.0
+1
+1
+NIL
+HORIZONTAL
+
+PLOT
+211
+456
+411
+606
+Num Turtles
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -2674135 true "" "plot count turtles with [color = red]"
+"pen-1" 1.0 0 -11085214 true "" "plot count turtles with [color = green]"
+"pen-2" 1.0 0 -13791810 true "" "plot count turtles with [color = blue]"
+
+BUTTON
+13
+66
+76
+99
+NIL
+go
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+PLOT
+427
+457
+627
+607
+Phase
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"set old-red-count count turtles with [color = red]\nset old-green-count count turtles with [color = green]\nset old-blue-count count turtles with [color = blue]\n" ""
+PENS
+"default" 1.0 0 -2674135 true "" "plotxy old-red-count (count turtles with [color = red])\nset old-red-count count turtles with [color = red]"
+"pen-1" 1.0 0 -7500403 true "" "plotxy old-green-count (count turtles with [color = green])\nset old-green-count count turtles with [color = green]"
+"pen-2" 1.0 0 -955883 true "" "plotxy old-blue-count (count turtles with [color = blue])\nset old-blue-count count turtles with [color = blue]"
 
 @#$#@#$#@
 ## WHAT IS IT?

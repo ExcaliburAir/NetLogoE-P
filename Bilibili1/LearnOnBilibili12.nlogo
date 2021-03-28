@@ -1,67 +1,64 @@
-globals
-[
-  num-clusters
-]
+breed [nodes node]
 
-turtles-own
-[
-  time-sinece-last-found
-]
+
 
 to setup
   ca
-  set num-clusters 4
-
-  ask n-of num-clusters patches
-  [
-    ask n-of 20 patches in-radius 5
-    [
-      set pcolor red
-    ]
-  ]
-
-  crt
-  [
-    set size 2
-    set color yellow
-    set time-sinece-last-found 999
-    pen-down
-  ]
-
   reset-ticks
+  ask patches [set pcolor white]
+  create-nodes num-nodes [
+    set shape "circle"
+    setxy random-pxcor random-pycor
+  ]
+
+end
+
+
+
+to layout
+  if ( mouse-down? and mouse-inside?) [
+    let closest nodes with-min [distancexy mouse-xcor mouse-ycor]
+    ask closest [setxy mouse-xcor mouse-ycor]
+  ]
+  layout-spring nodes links 0.5 1 1
 end
 
 to go
   tick
-  ask turtles [search]
-end
-
-to search
-  ifelse time-sinece-last-found <= 20
-    [right (random 181) - 90]
-    [right (random 21) - 10]
-
-  forward 1
-
-  ifelse pcolor = red
-  [
-      set time-sinece-last-found 0
-      set pcolor black
-  ]
-  [
-    set time-sinece-last-found time-sinece-last-found + 1
+  let disconnected-nodes nodes with [not any? link-neighbors]
+  ifelse (any? disconnected-nodes) [
+    ask one-of disconnected-nodes [
+      make-link
+    ]
+  ][
+    ask (random-one-stachastic nodes) [make-link]
   ]
 end
 
+to-report random-one-stachastic [nodeset]
+  let node-list reduce [[i1 i2] -> sentence i1 i2] [n-values (count link-neighbors) [self]] of nodeset
+  if (empty? node-list) [
+    report one-of nodeset
+  ]
+  report one-of node-list
+end
+
+
+;; node methods
+
+to make-link
+  let other-guy random-one-stachastic (other nodes)
+  create-link-with other-guy
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
-476
-16
-931
-472
+210
+10
+647
+448
 -1
 -1
-13.55
+13.0
 1
 10
 1
@@ -82,12 +79,12 @@ ticks
 30.0
 
 BUTTON
-59
-58
-125
-91
-setup
-setup
+12
+20
+78
+53
+NIL
+setup\n
 NIL
 1
 T
@@ -99,13 +96,45 @@ NIL
 1
 
 BUTTON
-60
-114
-123
-147
-go
-go
+23
+73
+93
+106
+NIL
+layout
 T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+SLIDER
+23
+186
+195
+219
+num-nodes
+num-nodes
+0
+100
+50.0
+1
+1
+NIL
+HORIZONTAL
+
+BUTTON
+96
+24
+159
+57
+NIL
+go
+NIL
 1
 T
 OBSERVER

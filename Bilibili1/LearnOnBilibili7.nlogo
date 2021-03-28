@@ -1,67 +1,77 @@
-globals
-[
-  num-clusters
-]
-
-turtles-own
-[
-  time-sinece-last-found
-]
+breed [nodes node]
+globals [colors bound solution]
 
 to setup
   ca
-  set num-clusters 4
+  ask patches [
+    set pcolor white
+  ]
+  set colors [red blue green]
 
-  ask n-of num-clusters patches
-  [
-    ask n-of 20 patches in-radius 5
-    [
-      set pcolor red
+  create-nodes num-nodes[
+    set shape "circle"
+    setxy random-pxcor random-pycor
+    ;set color one-of colors
+    set color black
+  ]
+
+  repeat num-edges [
+    ask one-of nodes [
+      create-link-with one-of other nodes
     ]
   ]
 
-  crt
-  [
-    set size 2
-    set color yellow
-    set time-sinece-last-found 999
-    pen-down
-  ]
-
-  reset-ticks
 end
 
-to go
-  tick
-  ask turtles [search]
+to layout
+  layout-spring nodes links 0.2 5 1
 end
 
-to search
-  ifelse time-sinece-last-found <= 20
-    [right (random 181) - 90]
-    [right (random 21) - 10]
-
-  forward 1
-
-  ifelse pcolor = red
-  [
-      set time-sinece-last-found 0
-      set pcolor black
+to branch-and-bound
+  set bound 1000000
+  set solution []
+  bab (turtle 0)
+  foreach solution [x ->
+    ask (first x) [set color item 1 x]
   ]
-  [
-    set time-sinece-last-found time-sinece-last-found + 1
-  ]
+
 end
 
+to bab [n]
+  let i [who] of n
+  foreach colors [ col ->
+    ask n [set color col]
+    let cost total-cost
+
+    ifelse (max [who] of nodes = i) [
+      set bound cost
+      set solution map [x -> (list x [color] of x)] (sort nodes) ;[[node color][node color]...]
+    ][ ;not a leaf node
+      ifelse (cost < bound) [
+        bab (turtle (i + 1))
+      ][
+        show "Trim"
+      ]
+    ]
+  ]
+  ask n [set color black]
+end
+
+to-report total-cost
+  let violated-links links with [
+    [color] of end1 != black and [color] of end2 != black and [color] of end1 = [color] of end2
+  ]
+  report count violated-links
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
-476
-16
-931
-472
+210
+10
+647
+448
 -1
 -1
-13.55
+13.0
 1
 10
 1
@@ -82,12 +92,12 @@ ticks
 30.0
 
 BUTTON
-59
-58
-125
-91
-setup
-setup
+10
+14
+76
+47
+NIL
+setup\n
 NIL
 1
 T
@@ -99,13 +109,60 @@ NIL
 1
 
 BUTTON
-60
-114
-123
-147
-go
-go
+95
+17
+165
+50
+NIL
+layout
 T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+SLIDER
+16
+70
+188
+103
+num-nodes
+num-nodes
+0
+100
+5.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+17
+125
+189
+158
+num-edges
+num-edges
+0
+100
+24.0
+1
+1
+NIL
+HORIZONTAL
+
+BUTTON
+19
+173
+171
+206
+NIL
+branch-and-bound\n
+NIL
 1
 T
 OBSERVER

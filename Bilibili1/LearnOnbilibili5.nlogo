@@ -1,67 +1,141 @@
-globals
-[
-  num-clusters
-]
+extensions [table]
 
-turtles-own
-[
-  time-sinece-last-found
-]
+globals [u headings actions]
+
+to put-utility [x y dir utility]
+  let state (list x y dir)
+  table:put u state utility
+end
+
+to-report get-utility [x y dir]
+  let state (list x y dir)
+  if (table:has-key? u state) [
+    report table:get u (list x y dir)
+  ]
+  put-utility x y dir 0
+  report 0
+end
+
+; state of the world is x,y,heading (0, 90, 180, 270)
+; actions: fd 1, lt 90, rt 90
 
 to setup
   ca
-  set num-clusters 4
-
-  ask n-of num-clusters patches
-  [
-    ask n-of 20 patches in-radius 5
-    [
+  reset-ticks
+  ask patches [
+    let coin random 10
+    set pcolor white
+    if (coin = 0) [
       set pcolor red
     ]
+    if (coin = 1) [
+      set pcolor green
+    ]
   ]
-
-  crt
-  [
-    set size 2
-    set color yellow
-    set time-sinece-last-found 999
-    pen-down
+  set headings [0 90 180 270]
+  set actions ["fd 1" "lt 90" "rt 90"]
+  set u table:make
+  create-turtles num-turtles [
+    set color blue
+    setxy random-pxcor random-pycor
+    set heading one-of headings
   ]
-
-  reset-ticks
 end
 
 to go
   tick
-  ask turtles [search]
-end
-
-to search
-  ifelse time-sinece-last-found <= 20
-    [right (random 181) - 90]
-    [right (random 21) - 10]
-
-  forward 1
-
-  ifelse pcolor = red
-  [
-      set time-sinece-last-found 0
-      set pcolor black
-  ]
-  [
-    set time-sinece-last-found time-sinece-last-found + 1
+  ask turtles [
+    take-best-action
   ]
 end
 
+to value-iteration
+  let delta 100
+  let my-turtle 0
+  create-turtles 1 [
+    set my-turtle self
+    set hidden? false
+    set color yellow
+  ]
+
+  while [ delta > epsilon * (1 - gamma) / gamma][
+
+    set delta 0
+    ask patches [
+      foreach headings [ head ->
+        let x pxcor
+        let y pycor
+        let dir head
+        let best-action 0
+
+        ask my-turtle [
+          setxy x y
+          set heading dir
+          let best-utility item 1 get-best-action
+          let current-utility get-utility x y dir
+          let new-utility (get-reward + gamma * best-utility)
+
+          put-utility x y dir new-utility
+          if (abs (current-utility - new-utility) > delta) [
+            set delta abs (current-utility - new-utility)
+          ]
+        ]
+        ;get-reward
+
+      ]
+    ]
+    plot delta
+    ;set-current-plot "delta"
+    ;show delta
+  ]
+  ask my-turtle [die]
+end
+
+
+;;;; turtle function
+
+to-report get-best-action
+  let x xcor
+  let y ycor
+  let dir heading
+  let best-action 0
+  let best-utility -100000
+
+  foreach actions [ action ->
+    run action ;take action run "fd 1"
+    let utility-of-action get-utility xcor ycor heading
+    if (utility-of-action > best-utility) [
+      set best-action action
+      set best-utility utility-of-action
+    ]
+    setxy x y
+    set heading dir
+  ]
+  setxy x y
+  set heading dir
+  report (list best-action best-utility)
+end
+
+
+to-report get-reward
+  if (pcolor = green) [report 10]
+  if (pcolor = red) [report -10]
+  report 0
+end
+
+to take-best-action
+  let best-action first get-best-action
+  run best-action
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
-476
-16
-931
-472
+210
+10
+647
+448
 -1
 -1
-13.55
+13.0
 1
 10
 1
@@ -82,12 +156,12 @@ ticks
 30.0
 
 BUTTON
-59
-58
-125
-91
-setup
-setup
+2
+14
+68
+47
+NIL
+setup\n
 NIL
 1
 T
@@ -98,13 +172,75 @@ NIL
 NIL
 1
 
+SLIDER
+12
+63
+184
+96
+gamma
+gamma
+0
+1
+0.9
+0.01
+1
+NIL
+HORIZONTAL
+
+SLIDER
+15
+112
+187
+145
+epsilon
+epsilon
+0
+1
+0.1
+0.01
+1
+NIL
+HORIZONTAL
+
 BUTTON
-60
-114
-123
-147
-go
-go
+96
+18
+179
+51
+iteration
+value-iteration
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+SLIDER
+12
+170
+184
+203
+num-turtles
+num-turtles
+0
+100
+3.0
+1
+1
+NIL
+HORIZONTAL
+
+BUTTON
+13
+223
+76
+256
+NIL
+go\n
 T
 1
 T
@@ -114,6 +250,24 @@ NIL
 NIL
 NIL
 1
+
+PLOT
+657
+16
+857
+166
+show delta
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot delta"
 
 @#$#@#$#@
 ## WHAT IS IT?

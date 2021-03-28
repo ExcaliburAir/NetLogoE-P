@@ -1,67 +1,57 @@
-globals
-[
-  num-clusters
+globals [
+  colors
 ]
 
-turtles-own
-[
-  time-sinece-last-found
+patches-own [
+  history
 ]
 
 to setup
   ca
-  set num-clusters 4
-
-  ask n-of num-clusters patches
-  [
-    ask n-of 20 patches in-radius 5
-    [
-      set pcolor red
-    ]
+  set colors [red white blue green]
+  ask patches [
+    set pcolor one-of colors
+    set history []
   ]
-
-  crt
-  [
-    set size 2
-    set color yellow
-    set time-sinece-last-found 999
-    pen-down
-  ]
-
   reset-ticks
 end
 
+
 to go
+  ask patches [
+    take-action
+  ]
   tick
-  ask turtles [search]
 end
 
-to search
-  ifelse time-sinece-last-found <= 20
-    [right (random 181) - 90]
-    [right (random 21) - 10]
-
-  forward 1
-
-  ifelse pcolor = red
-  [
-      set time-sinece-last-found 0
-      set pcolor black
-  ]
-  [
-    set time-sinece-last-found time-sinece-last-found + 1
-  ]
+to-report count-matches [i the-list]
+  report length filter [x -> x = i] the-list
 end
 
+to take-action
+  if (length history > memory-size) [
+    set history butlast history
+  ]
+  set history fput ([pcolor] of neighbors) history
+  let past-colors reduce [[a b] -> sentence a b] history
+
+  let color-frequency map [x -> count-matches x past-colors] colors
+  let min-color-count min color-frequency
+  set pcolor item (position min-color-count color-frequency) colors
+
+  ;set pcolor one-of modes past-colors
+  ;set pcolor one-of past-colors
+
+end
 @#$#@#$#@
 GRAPHICS-WINDOW
-476
-16
-931
-472
+210
+10
+647
+448
 -1
 -1
-13.55
+13.0
 1
 10
 1
@@ -82,11 +72,11 @@ ticks
 30.0
 
 BUTTON
-59
-58
-125
-91
-setup
+16
+24
+82
+57
+NIL
 setup
 NIL
 1
@@ -99,11 +89,11 @@ NIL
 1
 
 BUTTON
-60
-114
-123
-147
-go
+103
+26
+166
+59
+NIL
 go
 T
 1
@@ -114,6 +104,21 @@ NIL
 NIL
 NIL
 1
+
+SLIDER
+17
+131
+189
+164
+memory-size
+memory-size
+1
+100
+16.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?

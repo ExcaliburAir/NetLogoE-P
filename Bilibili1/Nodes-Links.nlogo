@@ -1,67 +1,40 @@
-globals
-[
-  num-clusters
-]
-
-turtles-own
-[
-  time-sinece-last-found
-]
+breed [nodes node]
+globals [colors]
 
 to setup
   ca
-  set num-clusters 4
+  ask patches [
+    set pcolor white
+  ]
+  set colors [red blue green]
 
-  ask n-of num-clusters patches
-  [
-    ask n-of 20 patches in-radius 5
-    [
-      set pcolor red
+  create-nodes num-nodes [
+    set shape "circle"
+    setxy random-pxcor random-pycor
+    set color one-of colors
+  ]
+
+  repeat num-edges [
+    ask one-of nodes [
+      create-link-with one-of other nodes
     ]
   ]
 
-  crt
-  [
-    set size 2
-    set color yellow
-    set time-sinece-last-found 999
-    pen-down
-  ]
 
-  reset-ticks
 end
 
-to go
-  tick
-  ask turtles [search]
+to layout
+  layout-spring nodes links 0.2 5 1
 end
-
-to search
-  ifelse time-sinece-last-found <= 20
-    [right (random 181) - 90]
-    [right (random 21) - 10]
-
-  forward 1
-
-  ifelse pcolor = red
-  [
-      set time-sinece-last-found 0
-      set pcolor black
-  ]
-  [
-    set time-sinece-last-found time-sinece-last-found + 1
-  ]
-end
-
 @#$#@#$#@
 GRAPHICS-WINDOW
-476
-16
-931
-472
+210
+10
+647
+448
 -1
 -1
-13.55
+13.0
 1
 10
 1
@@ -82,11 +55,11 @@ ticks
 30.0
 
 BUTTON
-59
-58
-125
-91
-setup
+10
+27
+76
+60
+NIL
 setup
 NIL
 1
@@ -99,13 +72,13 @@ NIL
 1
 
 BUTTON
-60
-114
-123
-147
-go
-go
-T
+93
+29
+163
+62
+NIL
+layout
+NIL
 1
 T
 OBSERVER
@@ -114,6 +87,36 @@ NIL
 NIL
 NIL
 1
+
+SLIDER
+11
+114
+183
+147
+num-nodes
+num-nodes
+0
+100
+10.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+14
+167
+186
+200
+num-edges
+num-edges
+0
+100
+20.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?

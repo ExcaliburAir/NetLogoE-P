@@ -4,14 +4,12 @@ turtles-own [ start-patch ]
 
 to setup
   ca
-  ask patches
-  [
+  ask patches [
     set elevation 200 + (100 * (sin (pxcor * 3.8) + sin (pycor * 3.8)))
     set pcolor scale-color green elevation 0 400
     set used? false
   ]
-  crt 500
-  [
+  crt 500 [
     set size 2
     setxy random-pxcor random-pycor
     show (word pxcor "" pycor " " elevation)
@@ -24,23 +22,34 @@ to setup
 end
 
 to go
-  ask turtles [move]
+  ask turtles [
+    move
+  ]
   plot corridor-width
   tick
-  if ticks >= 1000 [stop]
+  if ticks >= 1000 [
+    stop
+    export-plot "Corridor width" (word "Corridor-output-for-q-" q ".csv")
+  ]
+
 end
 
+; turtle functions
+
 to move ; A turtle procedure
-  ifelse random-float 1.0 < q
-  [ uphill elevation ]
-  [ move-to one-of neighbors ]
+  ifelse random-float 1.0 < q [
+    uphill elevation
+  ][
+    move-to one-of neighbors
+  ]
 
   set used? true
 end
 
-
 to-report corridor-width
-  let num-patches-used with patches
+  let num-patches-used count patches with [used? = true]
+  show num-patches-used
+  report num-patches-used
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
@@ -118,6 +127,31 @@ The-Q
 1
 NIL
 HORIZONTAL
+
+OUTPUT
+23
+259
+263
+313
+13
+
+PLOT
+20
+337
+220
+487
+Corridor width
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot corridor-width"
 
 @#$#@#$#@
 ## I dont know how to handle this

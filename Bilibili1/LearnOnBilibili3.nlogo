@@ -1,67 +1,35 @@
-globals
-[
-  num-clusters
-]
 
-turtles-own
-[
-  time-sinece-last-found
-]
 
 to setup
-  ca
-  set num-clusters 4
-
-  ask n-of num-clusters patches
-  [
-    ask n-of 20 patches in-radius 5
-    [
-      set pcolor red
-    ]
-  ]
-
-  crt
-  [
-    set size 2
-    set color yellow
-    set time-sinece-last-found 999
-    pen-down
-  ]
-
+  clear-all
   reset-ticks
+  ask patches [set pcolor white]
+  create-turtles num-turtles [
+    setxy random-xcor random-ycor
+  ]
 end
 
 to go
-  tick
-  ask turtles [search]
-end
+  ask turtles [
+    ;a turtle is doing all these things, myself
+    let closest-turtle min-one-of (other turtles) [distance myself]
+    let difference subtract-headings heading (towards closest-turtle)
 
-to search
-  ifelse time-sinece-last-found <= 20
-    [right (random 181) - 90]
-    [right (random 21) - 10]
-
-  forward 1
-
-  ifelse pcolor = red
-  [
-      set time-sinece-last-found 0
-      set pcolor black
-  ]
-  [
-    set time-sinece-last-found time-sinece-last-found + 1
+    ;set heading towards closest-turtle
+    set heading (heading +  (attraction * difference))
+    forward 1
+    pen-down
   ]
 end
-
 @#$#@#$#@
 GRAPHICS-WINDOW
-476
-16
-931
-472
+210
+10
+647
+448
 -1
 -1
-13.55
+13.0
 1
 10
 1
@@ -82,11 +50,11 @@ ticks
 30.0
 
 BUTTON
-59
-58
-125
-91
-setup
+39
+36
+105
+69
+NIL
 setup
 NIL
 1
@@ -99,11 +67,28 @@ NIL
 1
 
 BUTTON
-60
-114
-123
-147
-go
+126
+48
+189
+81
+NIL
+go\n
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+39
+96
+102
+129
+NIL
 go
 T
 1
@@ -114,6 +99,36 @@ NIL
 NIL
 NIL
 1
+
+SLIDER
+26
+159
+198
+192
+num-turtles
+num-turtles
+0
+100
+24.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+29
+215
+201
+248
+attraction
+attraction
+0
+1
+0.1
+0.1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?

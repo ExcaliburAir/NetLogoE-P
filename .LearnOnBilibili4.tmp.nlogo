@@ -1,80 +1,61 @@
-globals
-[
-  num-clusters
-]
-
-turtles-own
-[
-  time-sinece-last-found
-]
+patches-own [new-color];
 
 to setup
-  ca
-  set num-clusters 4
-
-  ask n-of num-clusters patches
-  [
-    ask n-of 20 patches in-radius 5
-    [
-      set pcolor red
-    ]
-  ]
-
-  crt
-  [
-    set size 2
-    set color yellow
-    set time-sinece-last-found 999
-    pen-down
-  ]
-
+  clear-all
   reset-ticks
+  ask patches [
+    set pcolor one-of [white red]
+  ]
+  ;create-turtles 10
 end
+
+
 
 to go
   tick
-  ask turtles [search]
+  ;ask turtles [forward 1]
+  ask patches [
+    let num-live-neighbors count (neighbors with [pcolor = red])
+    set new-color pcolor
+    if-else (pcolor = red)[
+      if (num-live-neighbors < 2 or num-live-neighbors > 3) [
+        set new-color white
+      ]
+    ][
+      if (num-live-neighbors = 3) [
+        set new-color red
+      ]
+    ]
+  ]
+
+  ask patches [
+    set pcolor new-color
+  ]
 end
 
-to search
-  ifelse time-sinece-last-found <= 20
-    [right (random 181) - 90]
-    [right (random 21) - 10]
-
-  forward 1
-
-  ifelse pcolor = red
-  [
-      set time-sinece-last-found 0
-      set pcolor black
-  ]
-  [
-    set time-sinece-last-found time-sinece-last-found + 1
-  ]
-end
 
 @#$#@#$#@
 GRAPHICS-WINDOW
-476
-16
-931
-472
+210
+10
+523
+324
 -1
 -1
-13.55
+5.0
 1
 10
 1
 1
 1
 0
+0
+0
 1
-1
-1
--16
-16
--16
-16
+-30
+30
+-30
+30
 0
 0
 1
@@ -82,11 +63,11 @@ ticks
 30.0
 
 BUTTON
-59
-58
-125
-91
-setup
+13
+19
+79
+52
+NIL
 setup
 NIL
 1
@@ -99,13 +80,30 @@ NIL
 1
 
 BUTTON
-60
-114
-123
-147
-go
+16
+64
+79
+97
+NIL
 go
 T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+17
+107
+80
+140
+NIL
+go\n
+NIL
 1
 T
 OBSERVER

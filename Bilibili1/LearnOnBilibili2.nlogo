@@ -1,67 +1,45 @@
-globals
-[
-  num-clusters
-]
+breed [peoples people]
 
-turtles-own
-[
-  time-sinece-last-found
-]
+breed [cats cat]
 
+cats-own [name age ]
+
+globals [x ]
+
+;;; obvserver methods (GUI)
 to setup
-  ca
-  set num-clusters 4
-
-  ask n-of num-clusters patches
-  [
-    ask n-of 20 patches in-radius 5
-    [
-      set pcolor red
-    ]
-  ]
-
-  crt
-  [
-    set size 2
-    set color yellow
-    set time-sinece-last-found 999
+  clear-all
+  create-cats 10 [
     pen-down
   ]
-
-  reset-ticks
 end
 
 to go
-  tick
-  ask turtles [search]
+  ask turtles with [color = red] [square]
 end
 
-to search
-  ifelse time-sinece-last-found <= 20
-    [right (random 181) - 90]
-    [right (random 21) - 10]
-
-  forward 1
-
-  ifelse pcolor = red
-  [
-      set time-sinece-last-found 0
-      set pcolor black
-  ]
-  [
-    set time-sinece-last-found time-sinece-last-found + 1
+to square
+  repeat 4 [
+    forward 10
+    right 90
   ]
 end
 
+to-report cuteness
+  report random 10
+end
+
+
+;;; agent methods
 @#$#@#$#@
 GRAPHICS-WINDOW
-476
-16
-931
-472
+210
+10
+647
+448
 -1
 -1
-13.55
+13.0
 1
 10
 1
@@ -82,12 +60,12 @@ ticks
 30.0
 
 BUTTON
-59
-58
-125
-91
-setup
-setup
+36
+48
+102
+81
+NIL
+setup\n
 NIL
 1
 T
@@ -99,13 +77,13 @@ NIL
 1
 
 BUTTON
-60
-114
-123
-147
-go
-go
-T
+53
+115
+127
+148
+square
+ask cats [square]
+NIL
 1
 T
 OBSERVER
@@ -114,6 +92,38 @@ NIL
 NIL
 NIL
 1
+
+BUTTON
+34
+172
+97
+205
+NIL
+go 
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+SLIDER
+17
+235
+189
+268
+num-cats
+num-cats
+0
+100
+27.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
 ## WHAT IS IT?

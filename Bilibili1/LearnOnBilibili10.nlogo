@@ -1,67 +1,143 @@
-globals
-[
-  num-clusters
-]
-
-turtles-own
-[
-  time-sinece-last-found
-]
+breed [nodes node]
+links-own [weight]
+globals [colors]
 
 to setup
   ca
-  set num-clusters 4
+  ask patches [
+    set pcolor white
+  ]
+  set colors [red blue green]
 
-  ask n-of num-clusters patches
-  [
-    ask n-of 20 patches in-radius 5
-    [
-      set pcolor red
+  create-nodes num-nodes [
+    set shape "circle"
+    setxy random-pxcor random-pycor
+    set color one-of colors
+  ]
+
+  repeat num-edges [
+    ask one-of nodes [
+      create-link-with one-of other nodes
     ]
   ]
-
-  crt
-  [
-    set size 2
-    set color yellow
-    set time-sinece-last-found 999
-    pen-down
+  ask links [
+    set weight 1
+    set label-color black
+    set label weight
   ]
-
   reset-ticks
+end
+
+to layout
+  layout-spring nodes links 0.2 5 1
 end
 
 to go
   tick
-  ask turtles [search]
-end
-
-to search
-  ifelse time-sinece-last-found <= 20
-    [right (random 181) - 90]
-    [right (random 21) - 10]
-
-  forward 1
-
-  ifelse pcolor = red
-  [
-      set time-sinece-last-found 0
-      set pcolor black
-  ]
-  [
-    set time-sinece-last-found time-sinece-last-found + 1
+  ask nodes [
+    change-color
   ]
 end
+
+;; helper functions
+
+;alist : [[key value][key value]...]
+
+to-report get-all-values [alist]
+  report map [x -> item 1 x] alist
+end
+
+to-report get-all-keys [alist]
+  report map [x -> first x] alist
+end
+
+to-report get-all-keys-for-value [alist value]
+  report get-all-keys (filter [x -> item 1 x = value] alist)
+end
+
+to-report get-value [alist key]
+  foreach alist [ x ->
+    if (first x = key) [report item 1 x]
+  ]
+  report "Error: no key"
+end
+
+
+;; node functions
+
+to-report conflict-links [the-color]
+  report my-links with [(end1 != myself and [color] of end1 = the-color) or (end2 != myself and [color] of end2 = the-color)]
+end
+
+to-report cost-of-color [the-color]
+  report sum ([weight] of conflict-links the-color)
+  ;report count link-neighbors with [color = the-color]
+end
+
+;; distriuted breack
+to change-color
+  ;set color one-of best-colors
+  let gain-color best-gain-color
+  let my-gain (first gain-color)
+  let max-neighbor-gain max get-all-keys ([best-gain-color] of link-neighbors)
+  if (my-gain >= max-neighbor-gain) [
+
+    set color (item 1 gain-color)
+  ]
+  if (my-gain > 0 and max-neighbor-gain <= 0) [
+    ask (conflict-links color) [
+      set weight weight + 1
+      set label weight
+    ]
+  ]
+end
+
+;report my best gain and color [best-gain best color]
+to-report best-gain-color
+  let color-costs map [x -> (list x cost-of-color x)] colors ;; [[color cost][color cost]...]
+  let min-cost min get-all-values color-costs
+  let best-colors get-all-keys-for-value color-costs min-cost
+  let current-cost (get-value color-costs color)
+  let gain (current-cost - min-cost)
+  report (list gain (one-of best-colors))
+end
+
+
+;; useless
+to backup
+  foreach colors [ col ->
+    if (not any? link-neighbors with [color = col]) [
+      set color col
+      stop
+    ]
+  ]
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 @#$#@#$#@
 GRAPHICS-WINDOW
-476
-16
-931
-472
+210
+10
+647
+448
 -1
 -1
-13.55
+13.0
 1
 10
 1
@@ -82,11 +158,11 @@ ticks
 30.0
 
 BUTTON
-59
-58
-125
-91
-setup
+10
+27
+76
+60
+NIL
 setup
 NIL
 1
@@ -99,12 +175,12 @@ NIL
 1
 
 BUTTON
-60
-114
-123
-147
-go
-go
+93
+29
+163
+62
+NIL
+layout
 T
 1
 T
@@ -114,6 +190,82 @@ NIL
 NIL
 NIL
 1
+
+SLIDER
+11
+114
+183
+147
+num-nodes
+num-nodes
+0
+100
+25.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+14
+167
+186
+200
+num-edges
+num-edges
+0
+100
+38.0
+1
+1
+NIL
+HORIZONTAL
+
+BUTTON
+18
+77
+81
+110
+NIL
+go\n
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+PLOT
+668
+22
+868
+172
+Constraint Violations
+NIL
+NIL
+0.0
+10.0
+0.0
+10.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot count links with [[color] of end1 = [color] of end2]"
+
+MONITOR
+666
+188
+809
+233
+Constraint Violations
+count links with [[color] of end1 = [color] of end2]
+0
+1
+11
 
 @#$#@#$#@
 ## WHAT IS IT?
