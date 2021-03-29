@@ -1,78 +1,128 @@
-globals [ q ]
-patches-own [ elevation used? ]
-turtles-own [ start-patch ]
+globals [edges-counts]
 
 to setup
   ca
-  ask patches [
-    set elevation 200 + (100 * (sin (pxcor * 3.8) + sin (pycor * 3.8)))
-    set pcolor scale-color green elevation 0 400
-    set used? false
-  ]
-  crt 500 [
-    set size 2
-    setxy random-pxcor random-pycor
-    show (word pxcor "" pycor " " elevation)
-    pen-down
-    set start-patch patch-here
+  crt num-nodes [
+    set shape "circle"
+    setxy random-xcor random-ycor
+    set color blue
   ]
   reset-ticks
-  set q The-Q
-
 end
 
-to go
+to wire1
+  init-func
+
   ask turtles [
-    move
-  ]
-  plot corridor-width
-  tick
-  if ticks >= 100 [
-    stop
-    export-plot "Corridor width" (word "Corridor-output-for-q-" q ".csv")
+    create-link-with one-of other turtles
   ]
 
+  count-func
+  show-min-link-turtle-func
+  show-max-link-turtle-func
 end
 
-; turtle functions
+to wire2
+  init-func
 
-to move ; A turtle procedure
-  ifelse random-float 1.0 < q [
-    uphill elevation
-  ][
-    move-to one-of neighbors
+  if num-links > max-links [
+    set num-links max-links
+  ]
+  while [count links < num-links] [
+    ask one-of turtles [
+      create-link-with one-of other turtles
+    ]
   ]
 
-  set used? true
+  count-func
+  show-min-link-turtle-func
+  show-max-link-turtle-func
 end
 
-to-report corridor-width
-  let num-patches-used count patches with [used? = true]
-  show num-patches-used
-  report num-patches-used
+to wire3
+  init-func
+
+  if num-links > max-links [
+    set num-links max-links
+  ]
+  ask turtles [
+    ask turtles with [who > [who] of myself] [
+      if random-float 1.0 < wiring-prob [
+        create-link-with myself
+      ]
+    ]
+  ]
+
+  count-func
+  show-min-link-turtle-func
+  show-max-link-turtle-func
+end
+
+to init-func
+  ask links [die]
+  ask turtles [set color blue]
+  set edges-counts []
+end
+
+to-report max-links
+  report min (list (num-nodes * (num-nodes - 1) / 2) 1000)
+end
+
+to count-func
+  ask turtles [
+    let edge-num count links with [myself = end1 or myself = end2]
+    set edges-counts fput edge-num edges-counts
+  ]
+end
+
+to show-min-link-turtle-func
+  ask turtles [
+    let edge-num count links with [myself = end1 or myself = end2]
+    if (edge-num = min edges-counts) [
+      set color red
+    ]
+  ]
+end
+
+to show-max-link-turtle-func
+  let agents []
+  ask turtles [
+    let edge-num count links with [myself = end1 or myself = end2]
+    if (edge-num = max edges-counts) [
+      set color green
+      set agents fput self agents
+    ]
+  ]
+  foreach agents [ agent ->
+    ask links [
+      if (end1 = agent or end2 = agent) [
+        set color green
+      ]
+    ]
+  ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-210
+264
 10
-818
-619
+701
+448
 -1
 -1
-4.0
+13.0
 1
 10
 1
 1
 1
 0
-1
-1
-1
 0
-149
 0
-149
+1
+-16
+16
+-16
+16
 0
 0
 1
@@ -80,11 +130,11 @@ ticks
 30.0
 
 BUTTON
-32
-52
-98
-85
-setup
+11
+24
+77
+57
+NIL
 setup
 NIL
 1
@@ -97,13 +147,13 @@ NIL
 1
 
 BUTTON
-56
-114
-119
-147
-go
-go
-T
+88
+77
+153
+110
+NIL
+wire2\n
+NIL
 1
 T
 OBSERVER
@@ -114,48 +164,118 @@ NIL
 1
 
 SLIDER
-20
-194
-192
+30
+239
+202
+272
+num-nodes
+num-nodes
+0
+200
+27.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+32
+290
+204
+323
+num-links
+num-links
+0
+1000
+32.0
+1
+1
+NIL
+HORIZONTAL
+
+MONITOR
+18
+393
+88
+438
+max-deg
+max edges-counts
+17
+1
+11
+
+MONITOR
+94
+394
+160
+439
+min-deg
+min edges-counts
+17
+1
+11
+
+MONITOR
+170
+395
 227
-The-Q
-The-Q
+440
+#links
+count links
+17
+1
+11
+
+BUTTON
+166
+77
+231
+110
+NIL
+wire3
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+SLIDER
+33
+337
+205
+370
+wiring-prob
+wiring-prob
 0
 1
-0.85
+0.5
 0.01
 1
 NIL
 HORIZONTAL
 
-OUTPUT
-23
-259
-263
-313
+BUTTON
 13
-
-PLOT
-20
-337
-220
-487
-Corridor width
+77
+78
+110
+NIL
+wire1
+NIL
+1
+T
+OBSERVER
 NIL
 NIL
-0.0
-10.0
-0.0
-10.0
-true
-false
-"" ""
-PENS
-"default" 1.0 0 -16777216 true "" "plot corridor-width"
+NIL
+NIL
+1
 
 @#$#@#$#@
-## I dont know how to handle this
-
 ## WHAT IS IT?
 
 (a general understanding of what the model is trying to show or explain)

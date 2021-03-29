@@ -1,65 +1,71 @@
-globals [ q ]
-patches-own [ elevation used? ]
-turtles-own [ start-patch ]
+globals [
+  percent-similar
+  percent-unhappy
+]
+
+turtles-own [
+  happy?
+  similar-nearby
+  total-nearby
+]
 
 to setup
   ca
-  ask patches [
-    set elevation 200 + (100 * (sin (pxcor * 3.8) + sin (pycor * 3.8)))
-    set pcolor scale-color green elevation 0 400
-    set used? false
+  ask n-of number patches [
+    sprout 1
   ]
-  crt 500 [
-    set size 2
-    setxy random-pxcor random-pycor
-    show (word pxcor "" pycor " " elevation)
-    pen-down
-    set start-patch patch-here
+  ask turtles [
+    set color one-of [red green]
   ]
+  update-turtles
+  update-globals
   reset-ticks
-  set q The-Q
-
 end
 
 to go
-  ask turtles [
-    move
-  ]
-  plot corridor-width
+  if all? turtles [happy?] [stop]
+  move-unhappy-turtles
+  update-turtles
+  update-globals
   tick
-  if ticks >= 100 [
-    stop
-    export-plot "Corridor width" (word "Corridor-output-for-q-" q ".csv")
-  ]
-
 end
 
-; turtle functions
-
-to move ; A turtle procedure
-  ifelse random-float 1.0 < q [
-    uphill elevation
-  ][
-    move-to one-of neighbors
-  ]
-
-  set used? true
+to move-unhappy-turtles
+  ask turtles with [not happy?] [find-new-spot]
 end
 
-to-report corridor-width
-  let num-patches-used count patches with [used? = true]
-  show num-patches-used
-  report num-patches-used
+to find-new-spot
+  rt random-float 360
+  fd random-float 10
+  if any? other turtles-here [
+    find-new-spot
+  ]
+  setxy pxcor pycor
+end
+
+to update-turtles
+  ask turtles [
+    set similar-nearby count (turtles-on neighbors) with [color = [color] of myself]
+    set total-nearby count (turtles-on neighbors)
+    set happy? similar-nearby >= (%-similar-wanted * total-nearby / 100)
+  ]
+end
+
+to update-globals
+  let similar-neighbors sum [similar-nearby] of turtles
+  let total-neighbors sum [total-nearby] of turtles
+  set percent-similar (similar-neighbors / total-neighbors) * 100
+  set percent-unhappy (count turtles with [not happy?]) / (count turtles) * 100
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-210
+278
 10
-818
-619
+796
+529
 -1
 -1
-4.0
+10.0
 1
 10
 1
@@ -69,10 +75,10 @@ GRAPHICS-WINDOW
 1
 1
 1
-0
-149
-0
-149
+-25
+25
+-25
+25
 0
 0
 1
@@ -80,11 +86,11 @@ ticks
 30.0
 
 BUTTON
-32
-52
-98
-85
-setup
+5
+13
+71
+46
+NIL
 setup
 NIL
 1
@@ -97,11 +103,11 @@ NIL
 1
 
 BUTTON
-56
-114
-119
-147
-go
+83
+21
+146
+54
+NIL
 go
 T
 1
@@ -114,48 +120,94 @@ NIL
 1
 
 SLIDER
-20
-194
-192
-227
-The-Q
-The-Q
+12
+68
+184
+101
+number
+number
 0
+2500
+2000.0
 1
-0.85
-0.01
 1
 NIL
 HORIZONTAL
 
-OUTPUT
-23
-259
-263
-313
-13
+SLIDER
+16
+117
+189
+150
+%-similar-wanted
+%-similar-wanted
+0
+100
+30.0
+1
+1
+%
+HORIZONTAL
 
 PLOT
-20
-337
-220
-487
-Corridor width
-NIL
-NIL
+16
+167
+216
+317
+Percent Similar
+time
+%
 0.0
-10.0
+100.0
 0.0
-10.0
+100.0
 true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot corridor-width"
+"default" 1.0 0 -16777216 true "" "plot percent-unhappy"
+
+PLOT
+17
+332
+217
+482
+Percent Unhappy
+time
+%
+0.0
+100.0
+0.0
+100.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -16777216 true "" "plot count turtles"
+
+MONITOR
+18
+494
+122
+539
+Percent Similar
+percent-similar
+17
+1
+11
+
+MONITOR
+21
+553
+139
+598
+Percent Unhappy
+percent-unhappy
+17
+1
+11
 
 @#$#@#$#@
-## I dont know how to handle this
-
 ## WHAT IS IT?
 
 (a general understanding of what the model is trying to show or explain)

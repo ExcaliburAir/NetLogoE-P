@@ -1,65 +1,151 @@
-globals [ q ]
-patches-own [ elevation used? ]
-turtles-own [ start-patch ]
+globals [
+  group-sites
+  boring-groups
+]
+
+turtles-own [
+  happy?
+  my-group-site
+]
 
 to setup
   ca
-  ask patches [
-    set elevation 200 + (100 * (sin (pxcor * 3.8) + sin (pycor * 3.8)))
-    set pcolor scale-color green elevation 0 400
-    set used? false
+  set group-sites patches with [group-site?]
+  set-default-shape turtles "person"
+  create-turtles number [
+    set color one-of [pink blue]
+    set size 3
+    set my-group-site one-of group-sites
+    move-to my-group-site
   ]
-  crt 500 [
-    set size 2
-    setxy random-pxcor random-pycor
-    show (word pxcor "" pycor " " elevation)
-    pen-down
-    set start-patch patch-here
-  ]
+  ask turtles [update-happiness]
+  count-boring-groups
+  update-labels
+  ask turtles [spread-out-vertically]
   reset-ticks
-  set q The-Q
-
 end
 
 to go
+  if all? turtles [happy?] [stop]
+  ask turtles [move-to my-group-site]
+  ask turtles [update-happiness]
+  ask turtles [leave-if-unhappy]
+  find-new-groups
+  count-boring-groups
   ask turtles [
-    move
+    set my-group-site patch-here
+    spread-out-vertically
   ]
-  plot corridor-width
   tick
-  if ticks >= 100 [
-    stop
-    export-plot "Corridor width" (word "Corridor-output-for-q-" q ".csv")
-  ]
-
 end
 
-; turtle functions
+to update-happiness
+  let total count turtles-here
+  let same count turtles-here with [color = [color] of myself]
+  let opposite (total - same)
+  set happy? (opposite / total) <= (tolerance / 100)
+end
 
-to move ; A turtle procedure
-  ifelse random-float 1.0 < q [
-    uphill elevation
+to leave-if-unhappy
+  if not happy? [
+    set heading one-of [90 270]
+    fd 1
+  ]
+end
+
+to find-new-groups
+  display
+  let malcontents turtles with [not member? patch-here group-sites]
+  if (not any? malcontents [stop]
+  ask malcontents [fd 1]
+  find-new-groups
+end
+
+to-report group-site?
+  let group-interval floor (world-width / num-groups)
+  report (pycor = 0) and
+         (pxcor <= 0) and
+         (pxcor mod group-interval = 0) and
+         (floor ((- pxcor) / group-interval) < num-groups)
+end
+
+to spread-out-vertically
+  ifelse woman? [
+    set heading 180
   ][
-    move-to one-of neighbors
+    set heading 0
   ]
-
-  set used? true
+  fd 4
+  while [any? other turtles-here] [
+    ifelse can-move? 2 [
+      fd 1
+    ][
+     set xcor xcor - 1
+     set ycor 0
+     fd 4
+    ]
+  ]
 end
 
-to-report corridor-width
-  let num-patches-used count patches with [used? = true]
-  show num-patches-used
-  report num-patches-used
+to count-boring-groups
+  ask group-sites [
+    ifelse boring? [
+      set plabel-color gray
+    ][
+      set plabel-color white
+    ]
+  ]
+  set boring-groups count group-sites with [plabel-color = gray]
 end
+
+to-report boring?
+  report length remove-duplicates ([color] of turtles-here) = 1
+end
+
+to update-labels
+  ask group-sites [set plabel count turtles-here]
+end
+
+to-report woman?
+  report color = pink
+end
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 @#$#@#$#@
 GRAPHICS-WINDOW
-210
+298
 10
-818
-619
+798
+685
 -1
 -1
-4.0
+6.0
 1
 10
 1
@@ -67,12 +153,12 @@ GRAPHICS-WINDOW
 1
 0
 1
-1
-1
 0
-149
-0
-149
+1
+-80
+1
+-55
+55
 0
 0
 1
@@ -80,11 +166,11 @@ ticks
 30.0
 
 BUTTON
-32
-52
-98
-85
-setup
+11
+8
+77
+41
+NIL
 setup
 NIL
 1
@@ -97,11 +183,28 @@ NIL
 1
 
 BUTTON
-56
-114
-119
-147
+94
+13
+157
+46
+NIL
 go
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+172
+16
+235
+49
+NIL
 go
 T
 1
@@ -114,48 +217,109 @@ NIL
 1
 
 SLIDER
-20
-194
-192
-227
-The-Q
-The-Q
+12
+66
+184
+99
+number
+number
 0
+300
+70.0
 1
-0.85
-0.01
 1
 NIL
 HORIZONTAL
 
-OUTPUT
-23
-259
-263
-313
-13
+SLIDER
+14
+112
+186
+145
+num-groups
+num-groups
+0
+30
+6.0
+1
+1
+NIL
+HORIZONTAL
+
+MONITOR
+15
+575
+118
+620
+number happy
+show
+17
+1
+11
+
+MONITOR
+15
+525
+139
+570
+single sex groups
+show
+17
+1
+11
 
 PLOT
-20
-337
-220
-487
-Corridor width
-NIL
+16
+190
+216
+340
+Number happy
+clock
 NIL
 0.0
-10.0
+100.0
 0.0
-10.0
+70.0
 true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot corridor-width"
+"default" 1.0 0 -14439633 true "" "plot count turtles"
+
+PLOT
+15
+357
+215
+507
+Single Sex Groups
+clock
+NIL
+0.0
+100.0
+0.0
+12.0
+true
+false
+"" ""
+PENS
+"default" 1.0 0 -5298144 true "" "plot count turtles"
+
+SLIDER
+17
+156
+189
+189
+tolerance
+tolerance
+0
+100
+25.0
+1
+1
+NIL
+HORIZONTAL
 
 @#$#@#$#@
-## I dont know how to handle this
-
 ## WHAT IS IT?
 
 (a general understanding of what the model is trying to show or explain)

@@ -1,161 +1,243 @@
-globals [ q ]
-patches-own [ elevation used? ]
-turtles-own [ start-patch ]
+breed [leaders leader]
+breed [followers follower]
 
 to setup
   ca
-  ask patches [
-    set elevation 200 + (100 * (sin (pxcor * 3.8) + sin (pycor * 3.8)))
-    set pcolor scale-color green elevation 0 400
-    set used? false
-  ]
-  crt 500 [
-    set size 2
-    setxy random-pxcor random-pycor
-    show (word pxcor "" pycor " " elevation)
-    pen-down
-    set start-patch patch-here
-  ]
   reset-ticks
-  set q The-Q
+  set-default-shape turtles "bug"
+
+  ; 蚂蚁巢穴
+  ask patch -40 0 [
+    sprout 1 [ ;?
+      set color brown
+      set shape "circle"
+      set size 10
+      stamp
+      die
+    ]
+  ]
+
+  ; 食物位置
+  ask patch 40 0 [
+    sprout 1 [
+      set color orange
+      set shape "circle"
+      set size 10
+      stamp
+      die
+    ]
+  ]
+
+  create-leaders 1 [set color red]
+  create-followers (num-ants - 1) [
+    set color yellow
+    set heading 90
+  ]
+  ask turtles [
+    setxy -40 0
+    set size 2
+  ]
+  ask turtle (max [who] of turtles) [
+    set color blue
+    set pen-size 2
+    pen-down
+  ]
+  ask leaders [
+    set pen-size 2
+    pen-down
+  ]
 
 end
 
 to go
-  ask turtles [
-    move
-  ]
-  plot corridor-width
-  tick
-  if ticks >= 100 [
+  if all? turtles [xcor >= 40] [
     stop
-    export-plot "Corridor width" (word "Corridor-output-for-q-" q ".csv")
   ]
-
+  ask leaders [
+    wiggle leader-wiggle-angle
+    correct-path
+    if (xcor > (40 - 5)) [
+      facexy 40 0
+    ]
+    if (xcor < 40) [
+      fd 0.5
+    ]
+  ]
+  ask followers [
+    face turtle (who - 1)
+    if time-to-start? and (xcor < 40) [
+      fd 0.5
+    ]
+  ]
+  tick
 end
 
-; turtle functions
+to wiggle [angle]
+  rt random-float angle
+  lt random-float angle
+end
 
-to move ; A turtle procedure
-  ifelse random-float 1.0 < q [
-    uphill elevation
+to correct-path
+  ifelse heading > 180 [
+    rt 180
   ][
-    move-to one-of neighbors
+    if patch-at 0 -5 = nobody [
+      rt 100
+    ]
+    if patch-at 0 5 = nobody [
+      lt 100
+    ]
   ]
-
-  set used? true
 end
 
-to-report corridor-width
-  let num-patches-used count patches with [used? = true]
-  show num-patches-used
-  report num-patches-used
+to-report time-to-start?
+  report ([xcor] of (turtle (who - 1))) > (-40 + start-delay)
 end
+
+to-report show-heading-func
+  let angle 0
+  ask one-of leaders [
+    set angle heading
+  ]
+  report angle
+end
+
+
+
+
+
+
+
 @#$#@#$#@
 GRAPHICS-WINDOW
-210
+386
 10
-818
-619
+1000
+625
 -1
 -1
-4.0
+6.0
 1
 10
 1
 1
 1
 0
-1
-1
-1
 0
-149
 0
-149
+1
+-50
+50
+-50
+50
 0
 0
 1
 ticks
 30.0
 
-BUTTON
-32
-52
-98
-85
-setup
-setup
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-56
-114
-119
-147
-go
-go
-T
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
 SLIDER
-20
-194
-192
-227
-The-Q
-The-Q
+17
+26
+334
+59
+num-ants
+num-ants
 0
+1000
+50.0
 1
-0.85
-0.01
 1
 NIL
 HORIZONTAL
 
-OUTPUT
-23
-259
-263
-313
-13
-
-PLOT
+SLIDER
 20
-337
-220
-487
-Corridor width
+74
+251
+107
+leader-wiggle-angle
+leader-wiggle-angle
+0
+100
+15.0
+1
+1
+degrees
+HORIZONTAL
+
+SLIDER
+21
+123
+252
+156
+start-delay
+start-delay
+0
+100
+5.0
+1
+1
+NIL
+HORIZONTAL
+
+MONITOR
+24
+188
+122
+233
+ants-released
+count turtles
+17
+1
+11
+
+MONITOR
+26
+249
+134
+294
+leader-heading
+show-heading-func
+17
+1
+11
+
+BUTTON
+30
+311
+96
+344
+NIL
+setup
+NIL
+1
+T
+OBSERVER
 NIL
 NIL
-0.0
-10.0
-0.0
-10.0
-true
-false
-"" ""
-PENS
-"default" 1.0 0 -16777216 true "" "plot corridor-width"
+NIL
+NIL
+1
+
+BUTTON
+32
+358
+95
+391
+NIL
+go
+T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
 @#$#@#$#@
-## I dont know how to handle this
-
 ## WHAT IS IT?
 
 (a general understanding of what the model is trying to show or explain)

@@ -1,65 +1,58 @@
-globals [ q ]
-patches-own [ elevation used? ]
-turtles-own [ start-patch ]
+globals [sum-of-spins]
+
+patches-own [spin]
 
 to setup
   ca
   ask patches [
-    set elevation 200 + (100 * (sin (pxcor * 3.8) + sin (pycor * 3.8)))
-    set pcolor scale-color green elevation 0 400
-    set used? false
+    ifelse random 100 < probability-of-spin-up [
+      set spin 1
+    ][
+      set spin -1
+    ]
+      recolor-func
   ]
-  crt 500 [
-    set size 2
-    setxy random-pxcor random-pycor
-    show (word pxcor "" pycor " " elevation)
-    pen-down
-    set start-patch patch-here
-  ]
+  set sum-of-spins sum [spin] of patches
   reset-ticks
-  set q The-Q
-
 end
 
 to go
-  ask turtles [
-    move
+  repeat 1000 [
+    ask one-of patches [update]
   ]
-  plot corridor-width
-  tick
-  if ticks >= 1000 [
-    stop
-    export-plot "Corridor width" (word "Corridor-output-for-q-" q ".csv")
-  ]
-
+  tick-advance 1000 ;to search
+  update-plots ; to search
 end
 
-; turtle functions
+to update
+  let Ediff (2 * spin * (sum [spin] of neighbors4))
+  if (Ediff <= 0) or (temperature > 0 and (random-float 1.0 < exp ((- Ediff) / temperature))) [
+    set spin (- spin)
+    set sum-of-spins (sum-of-spins + 2 * spin)
+    recolor-func
+  ]
+end
 
-to move ; A turtle procedure
-  ifelse random-float 1.0 < q [
-    uphill elevation
+to recolor-func
+  ifelse spin = 1 [
+    set pcolor blue + 2
   ][
-    move-to one-of neighbors
+    set pcolor blue - 2
   ]
-
-  set used? true
 end
 
-to-report corridor-width
-  let num-patches-used count patches with [used? = true]
-  show num-patches-used
-  report num-patches-used
+to-report magnetization-func
+  report sum-of-spins / (count patches)
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-210
+346
 10
-818
-619
+783
+448
 -1
 -1
-4.0
+13.0
 1
 10
 1
@@ -69,93 +62,111 @@ GRAPHICS-WINDOW
 1
 1
 1
-0
-149
-0
-149
+-16
+16
+-16
+16
 0
 0
 1
 ticks
 30.0
 
-BUTTON
-32
-52
-98
-85
-setup
-setup
-NIL
+SLIDER
+10
+14
+221
+47
+probability-of-spin-up
+probability-of-spin-up
+0
+100
+92.0
 1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
 1
-
-BUTTON
-56
-114
-119
-147
-go
-go
-T
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
+%
+HORIZONTAL
 
 SLIDER
-20
-194
-192
-227
-The-Q
-The-Q
+16
+60
+188
+93
+temperature
+temperature
 0
-1
-0.85
+10
+2.27
 0.01
 1
 NIL
 HORIZONTAL
 
-OUTPUT
-23
-259
-263
-313
-13
+BUTTON
+17
+117
+83
+150
+NIL
+setup
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+BUTTON
+119
+118
+182
+151
+NIL
+go
+T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+MONITOR
+20
+167
+121
+212
+magnetization
+magnetization-func
+17
+1
+11
 
 PLOT
-20
-337
-220
-487
-Corridor width
-NIL
-NIL
+19
+236
+219
+386
+Magnetization
+time
+average spin
 0.0
-10.0
-0.0
-10.0
+100.0
+-1.0
+1.0
 true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot corridor-width"
+"default" 1.0 0 -13791810 true "" "plot magnetization-func"
+"pen-1" 1.0 0 -7500403 true "" "plot 0"
 
 @#$#@#$#@
-## I dont know how to handle this
-
 ## WHAT IS IT?
 
 (a general understanding of what the model is trying to show or explain)

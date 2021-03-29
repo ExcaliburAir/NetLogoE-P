@@ -1,65 +1,65 @@
-globals [ q ]
-patches-own [ elevation used? ]
-turtles-own [ start-patch ]
+patches-own [vote total]
 
 to setup
   ca
   ask patches [
-    set elevation 200 + (100 * (sin (pxcor * 3.8) + sin (pycor * 3.8)))
-    set pcolor scale-color green elevation 0 400
-    set used? false
-  ]
-  crt 500 [
-    set size 2
-    setxy random-pxcor random-pycor
-    show (word pxcor "" pycor " " elevation)
-    pen-down
-    set start-patch patch-here
+    set vote random 2
+    recolor-patch
   ]
   reset-ticks
-  set q The-Q
-
 end
 
 to go
-  ask turtles [
-    move
+  let any-votes-changed? false
+  ask patches [
+    set total (sum [vote] of neighbors)
   ]
-  plot corridor-width
+
+  ask patches [
+    let previous-vote vote
+    if total > 5 [set vote 1]
+    if total < 3 [set vote 0]
+    if total = 4 [
+      if change-vote-if-tied? [
+        set vote (1 - vote)
+      ]
+    ]
+    if total = 5 [
+      ifelse award-close-calls-to-loser? [
+        set vote 0 ][
+        set vote 1
+      ]
+    ]
+    if total = 3 [
+      ifelse award-close-calls-to-loser? [
+        set vote 1 ][
+        set vote 0
+      ]
+    ]
+    if vote != previous-vote [
+      set any-votes-changed? true
+    ]
+    recolor-patch
+  ]
+  if not any-votes-changed? [stop]
   tick
-  if ticks >= 100 [
-    stop
-    export-plot "Corridor width" (word "Corridor-output-for-q-" q ".csv")
-  ]
-
 end
 
-; turtle functions
-
-to move ; A turtle procedure
-  ifelse random-float 1.0 < q [
-    uphill elevation
-  ][
-    move-to one-of neighbors
+to recolor-patch
+  ifelse vote = 0 [
+    set pcolor green ][
+    set pcolor blue
   ]
-
-  set used? true
-end
-
-to-report corridor-width
-  let num-patches-used count patches with [used? = true]
-  show num-patches-used
-  report num-patches-used
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-210
-10
-818
-619
+350
+11
+787
+449
 -1
 -1
-4.0
+13.0
 1
 10
 1
@@ -69,10 +69,10 @@ GRAPHICS-WINDOW
 1
 1
 1
-0
-149
-0
-149
+-16
+16
+-16
+16
 0
 0
 1
@@ -80,11 +80,11 @@ ticks
 30.0
 
 BUTTON
-32
-52
-98
-85
-setup
+11
+22
+77
+55
+NIL
 setup
 NIL
 1
@@ -97,11 +97,11 @@ NIL
 1
 
 BUTTON
+97
+23
+160
 56
-114
-119
-147
-go
+NIL
 go
 T
 1
@@ -113,49 +113,51 @@ NIL
 NIL
 1
 
-SLIDER
+SWITCH
+17
+89
+203
+122
+change-vote-if-tied?
+change-vote-if-tied?
+1
+1
+-1000
+
+SWITCH
 20
-194
-192
-227
-The-Q
-The-Q
+137
+251
+170
+award-close-calls-to-loser?
+award-close-calls-to-loser?
 0
 1
-0.85
-0.01
+-1000
+
+MONITOR
+24
+211
+116
+256
+blue patches
+count patches with [pcolor = blue]
+17
 1
-NIL
-HORIZONTAL
+11
 
-OUTPUT
-23
-259
-263
-313
-13
-
-PLOT
-20
-337
-220
-487
-Corridor width
-NIL
-NIL
-0.0
-10.0
-0.0
-10.0
-true
-false
-"" ""
-PENS
-"default" 1.0 0 -16777216 true "" "plot corridor-width"
+MONITOR
+25
+275
+126
+320
+green patches
+show
+17
+1
+11
 
 @#$#@#$#@
-## I dont know how to handle this
-
 ## WHAT IS IT?
 
 (a general understanding of what the model is trying to show or explain)

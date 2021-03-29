@@ -1,161 +1,217 @@
-globals [ q ]
-patches-own [ elevation used? ]
-turtles-own [ start-patch ]
+
+
+globals [edges-counts]
+
+
+;; buttons
 
 to setup
   ca
-  ask patches [
-    set elevation 200 + (100 * (sin (pxcor * 3.8) + sin (pycor * 3.8)))
-    set pcolor scale-color green elevation 0 400
-    set used? false
-  ]
-  crt 500 [
+  set-default-shape turtles "circle"
+  crt num-nodes [
+    set color blue
     set size 2
-    setxy random-pxcor random-pycor
-    show (word pxcor "" pycor " " elevation)
-    pen-down
-    set start-patch patch-here
   ]
+  layout-circle turtles (world-width / 2 - 2);
+  set edges-counts []
   reset-ticks
-  set q The-Q
-
 end
 
 to go
-  ask turtles [
-    move
-  ]
-  plot corridor-width
   tick
-  if ticks >= 100 [
-    stop
-    export-plot "Corridor width" (word "Corridor-output-for-q-" q ".csv")
-  ]
+  init-func
 
+  if not any? turtles [stop]
+  ask one-of turtles [
+    create-link-with one-of other turtles
+  ]
+  while [count links > number-of-links] [
+    ask one-of links [die]
+  ]
+  count-func
+  show-min-link-turtle-func
+  show-max-link-turtle-func
 end
 
-; turtle functions
+;; to use back
 
-to move ; A turtle procedure
-  ifelse random-float 1.0 < q [
-    uphill elevation
-  ][
-    move-to one-of neighbors
-  ]
-
-  set used? true
+to init-func
+  ask turtles [set color blue]
+  set edges-counts []
 end
 
-to-report corridor-width
-  let num-patches-used count patches with [used? = true]
-  show num-patches-used
-  report num-patches-used
+to-report max-links
+  report min (list (num-nodes * (num-nodes - 1) / 2) 1000)
+end
+
+to count-func
+  ask turtles [
+    let edge-num count links with [myself = end1 or myself = end2]
+    set edges-counts fput edge-num edges-counts
+  ]
+end
+
+to show-min-link-turtle-func
+  ask turtles [
+    let edge-num count links with [myself = end1 or myself = end2]
+    if (edge-num = min edges-counts) [
+      set color red
+    ]
+  ]
+end
+
+to show-max-link-turtle-func
+  let agents []
+  ask turtles [
+    let edge-num count links with [myself = end1 or myself = end2]
+    if (edge-num = max edges-counts) [
+      set color green
+      set agents fput self agents
+    ]
+  ]
+  foreach agents [ agent ->
+    ask links [
+      if (end1 = agent or end2 = agent) [
+        set color green
+      ]
+    ]
+  ]
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-210
+384
 10
-818
-619
+821
+448
 -1
 -1
-4.0
+13.0
 1
 10
 1
 1
 1
 0
-1
-1
-1
 0
-149
 0
-149
+1
+-16
+16
+-16
+16
 0
 0
 1
 ticks
 30.0
 
-BUTTON
-32
-52
-98
-85
-setup
-setup
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-56
-114
-119
-147
-go
-go
-T
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
 SLIDER
-20
-194
-192
-227
-The-Q
-The-Q
+12
+26
+184
+59
+num-nodes
+num-nodes
 0
+100
+30.0
 1
-0.85
-0.01
 1
 NIL
 HORIZONTAL
 
-OUTPUT
-23
-259
-263
-313
-13
+SLIDER
+14
+72
+186
+105
+number-of-links
+number-of-links
+0
+100
+47.0
+1
+1
+NIL
+HORIZONTAL
 
-PLOT
-20
-337
-220
-487
-Corridor width
+BUTTON
+16
+150
+82
+183
+NIL
+setup
+NIL
+1
+T
+OBSERVER
 NIL
 NIL
-0.0
-10.0
-0.0
-10.0
-true
-false
-"" ""
-PENS
-"default" 1.0 0 -16777216 true "" "plot corridor-width"
+NIL
+NIL
+1
+
+BUTTON
+17
+200
+80
+233
+NIL
+go
+T
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
+
+MONITOR
+22
+261
+95
+306
+max edge
+max edges-counts
+17
+1
+11
+
+MONITOR
+23
+321
+93
+366
+min edge
+min edges-counts
+17
+1
+11
+
+TEXTBOX
+121
+269
+271
+287
+连接数最多的节点以绿色表示
+11
+65.0
+1
+
+TEXTBOX
+121
+330
+271
+348
+连接数最小的节点以红色表示
+11
+14.0
+1
 
 @#$#@#$#@
-## I dont know how to handle this
-
 ## WHAT IS IT?
 
 (a general understanding of what the model is trying to show or explain)

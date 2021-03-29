@@ -1,161 +1,120 @@
-globals [ q ]
-patches-own [ elevation used? ]
-turtles-own [ start-patch ]
+turtles-own [friend enemy]
 
 to setup
   ca
-  ask patches [
-    set elevation 200 + (100 * (sin (pxcor * 3.8) + sin (pycor * 3.8)))
-    set pcolor scale-color green elevation 0 400
-    set used? false
-  ]
-  crt 500 [
-    set size 2
-    setxy random-pxcor random-pycor
-    show (word pxcor "" pycor " " elevation)
-    pen-down
-    set start-patch patch-here
+  ask patches [set pcolor white]
+  crt number [
+    setxy random-xcor random-ycor
+    set color one-of [red blue]
+
+    set friend one-of other turtles
+    set enemy one-of other turtles
   ]
   reset-ticks
-  set q The-Q
-
 end
 
 to go
   ask turtles [
-    move
+    if (color = blue) [
+      act-bravely
+    ]
+    if (color = red) [
+      act-cowardly
+    ]
   ]
-  plot corridor-width
-  tick
-  if ticks >= 100 [
-    stop
-    export-plot "Corridor width" (word "Corridor-output-for-q-" q ".csv")
-  ]
-
 end
 
-; turtle functions
-
-to move ; A turtle procedure
-  ifelse random-float 1.0 < q [
-    uphill elevation
-  ][
-    move-to one-of neighbors
-  ]
-
-  set used? true
+to act-bravely
+  let x ([xcor] of friend + [xcor] of enemy) / 2
+  let y ([ycor] of friend + [ycor] of enemy) / 2
+  facexy x y
+  fd 0.1
 end
 
-to-report corridor-width
-  let num-patches-used count patches with [used? = true]
-  show num-patches-used
-  report num-patches-used
+to act-cowardly
+  let x [xcor] of friend + ([xcor] of friend - [xcor] of enemy) / 2
+  let y [ycor] of friend + ([ycor] of friend - [ycor] of enemy) / 2
+  facexy x y
+  fd 0.1
 end
 @#$#@#$#@
 GRAPHICS-WINDOW
-210
+384
 10
-818
-619
+821
+448
 -1
 -1
-4.0
+13.0
 1
 10
 1
 1
 1
 0
-1
-1
-1
 0
-149
 0
-149
+1
+-16
+16
+-16
+16
 0
 0
 1
 ticks
 30.0
 
-BUTTON
-32
-52
-98
-85
-setup
-setup
-NIL
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
-BUTTON
-56
-114
-119
-147
-go
-go
-T
-1
-T
-OBSERVER
-NIL
-NIL
-NIL
-NIL
-1
-
 SLIDER
-20
+22
+26
 194
-192
-227
-The-Q
-The-Q
+59
+number
+number
 0
+200
+68.0
 1
-0.85
-0.01
 1
 NIL
 HORIZONTAL
 
-OUTPUT
-23
-259
-263
-313
-13
+BUTTON
+25
+83
+91
+116
+NIL
+setup
+NIL
+1
+T
+OBSERVER
+NIL
+NIL
+NIL
+NIL
+1
 
-PLOT
-20
-337
-220
-487
-Corridor width
+BUTTON
+28
+131
+91
+164
+NIL
+go
+T
+1
+T
+OBSERVER
 NIL
 NIL
-0.0
-10.0
-0.0
-10.0
-true
-false
-"" ""
-PENS
-"default" 1.0 0 -16777216 true "" "plot corridor-width"
+NIL
+NIL
+1
 
 @#$#@#$#@
-## I dont know how to handle this
-
 ## WHAT IS IT?
 
 (a general understanding of what the model is trying to show or explain)

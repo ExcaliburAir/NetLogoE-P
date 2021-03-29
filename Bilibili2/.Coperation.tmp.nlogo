@@ -1,65 +1,125 @@
-globals [ q ]
-patches-own [ elevation used? ]
-turtles-own [ start-patch ]
+turtles-own [energy]
+patches-own [grass]
+
+breed [cooperative-cows cooperative-cow]
+breed [greedy-cows greedy-cow]
 
 to setup
   ca
+  setup-cows
   ask patches [
-    set elevation 200 + (100 * (sin (pxcor * 3.8) + sin (pycor * 3.8)))
-    set pcolor scale-color green elevation 0 400
-    set used? false
-  ]
-  crt 500 [
-    set size 2
-    setxy random-pxcor random-pycor
-    show (word pxcor "" pycor " " elevation)
-    pen-down
-    set start-patch patch-here
+    set grass max-grass-height
+    color-grass
   ]
   reset-ticks
-  set q The-Q
+end
 
+to setup-cows
+  set-default-shape turtles "cow"
+  crt initial-cows [
+    setxy random-xcor random-ycor
+    set energy metabolism * 4
+    ifelse (random-float 1.0 < cooperative-probability) [
+      set breed cooperative-cows
+      set color red
+    ][
+      set breed greedy-cows
+      set color sky
+    ]
+  ]
 end
 
 to go
   ask turtles [
     move
+    eat
+    reproduce
   ]
-  plot corridor-width
+  ask patches [
+    grow-grass
+    color-grass
+  ]
   tick
-  if ticks >= 100 [
-    stop
-    export-plot "Corridor width" (word "Corridor-output-for-q-" q ".csv")
-  ]
-
 end
 
-; turtle functions
+to reproduce
+  if energy > reproduction-threshold [
+    set energy energy - reproduction-cost
+    hatch 1
+  ]
+end
 
-to move ; A turtle procedure
-  ifelse random-float 1.0 < q [
-    uphill elevation
+to grow-grass
+  ifelse (grass >= low-high-threshold) [
+    ; high grass
+    if high-growth-chance >= random-float 100 [
+      set grass grass + 1
+    ]
   ][
-    move-to one-of neighbors
+    ; low grass
+    if low-growth-chance >= random-float 100 [
+      set grass grass + 1
+    ]
   ]
-
-  set used? true
+  if grass > max-grass-height [
+    set grass max-grass-height
+  ]
 end
 
-to-report corridor-width
-  let num-patches-used count patches with [used? = true]
-  show num-patches-used
-  report num-patches-used
+to color-grass
+  set pcolor scale-color (green - 1) grass 0 (2 * max-grass-height)
 end
+
+to move
+  rt random 360
+  fd stride-length
+  set energy energy - metabolism
+  if energy < 0 [die]
+end
+
+to eat
+  ifelse (breed = cooperative-cows) [
+    eat-cooperative
+  ][
+    if (breed = greedy-cows) [
+      eat-greedy
+    ]
+  ]
+end
+
+to eat-cooperative
+  if grass > low-high-threshold [
+    set grass grass - 1
+    set energy energy + grass-energy
+  ]
+end
+
+to eat-greedy
+  if grass > 0 [
+    set grass grass - 1
+    set energy energy + grass-energy
+  ]
+end
+
+
+
+
+
+
+
+
+
+
+
 @#$#@#$#@
 GRAPHICS-WINDOW
-210
+388
 10
-818
-619
+825
+448
 -1
 -1
-4.0
+13.0
 1
 10
 1
@@ -69,10 +129,10 @@ GRAPHICS-WINDOW
 1
 1
 1
-0
-149
-0
-149
+-16
+16
+-16
+16
 0
 0
 1
@@ -80,11 +140,11 @@ ticks
 30.0
 
 BUTTON
-32
+14
+19
+80
 52
-98
-85
-setup
+NIL
 setup
 NIL
 1
@@ -97,11 +157,11 @@ NIL
 1
 
 BUTTON
-56
-114
-119
-147
-go
+89
+19
+152
+52
+NIL
 go
 T
 1
@@ -114,48 +174,212 @@ NIL
 1
 
 SLIDER
-20
-194
-192
-227
-The-Q
-The-Q
+15
+73
+187
+106
+initial-cows
+initial-cows
+0
+100
+8.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+18
+114
+190
+147
+stride-length
+stride-length
 0
 1
-0.85
+0.2
+0.1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+10
+156
+210
+189
+cooperative-probability
+cooperative-probability
+0
+1
+0.5
 0.01
 1
 NIL
 HORIZONTAL
 
-OUTPUT
-23
-259
-263
-313
-13
+SLIDER
+198
+74
+370
+107
+metabolism
+metabolism
+0
+100
+6.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+198
+114
+370
+147
+reproduction-cost
+reproduction-cost
+0
+100
+100.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+9
+195
+211
+228
+reproduction-threshold
+reproduction-threshold
+0
+200
+104.0
+1
+1
+NIL
+HORIZONTAL
 
 PLOT
-20
-337
-220
-487
-Corridor width
-NIL
-NIL
+11
+235
+375
+443
+Cows over time
+Time
+Cows
 0.0
-10.0
+364.0
 0.0
-10.0
+1200.0
 true
 false
 "" ""
 PENS
-"default" 1.0 0 -16777216 true "" "plot corridor-width"
+"default" 1.0 0 -5298144 true "" "plot count cooperative-cows"
+"pen-1" 1.0 0 -14070903 true "" "plot count greedy-cows"
+
+SLIDER
+20
+468
+202
+501
+high-growth-chance
+high-growth-chance
+0
+100
+92.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+24
+512
+199
+545
+low-growth-chance
+low-growth-chance
+0
+100
+13.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+27
+559
+199
+592
+grass-energy
+grass-energy
+0
+200
+90.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+216
+473
+388
+506
+max-grass-height
+max-grass-height
+0
+100
+11.0
+1
+1
+NIL
+HORIZONTAL
+
+SLIDER
+217
+516
+392
+549
+low-high-threshold
+low-high-threshold
+0
+100
+5.0
+1
+1
+NIL
+HORIZONTAL
+
+MONITOR
+408
+476
+510
+521
+# greedy cows
+show
+17
+1
+11
+
+MONITOR
+410
+530
+542
+575
+# cooperative cows
+show
+17
+1
+11
 
 @#$#@#$#@
-## I dont know how to handle this
-
 ## WHAT IS IT?
 
 (a general understanding of what the model is trying to show or explain)
