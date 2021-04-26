@@ -1,9 +1,12 @@
+;全領域で使う変数
 globals [edges-counts]
 
+
 to setup
-  ca
+  ca ; 全部をクレアする
+  ; turtle agent を作る
   crt num-nodes [
-    set shape "circle"
+    set shape "circle" ;
     setxy random-xcor random-ycor
     set color blue
   ]
